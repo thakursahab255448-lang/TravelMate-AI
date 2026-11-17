@@ -1,0 +1,238 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Private user account profile and personal travel preferences.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 200
+        },
+        "travelStyle": {
+          "type": "string",
+          "enum": ["Adventure", "Family", "Solo", "Nature", "Historical", "Religious", "Romantic", "Budget"],
+          "maxLength": 40
+        },
+        "preferredCurrency": {
+          "type": "string",
+          "maxLength": 10
+        },
+        "homeAirport": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "savedDestinationIds": {
+          "type": "array",
+          "description": "Up to 20 saved destination IDs"
+        },
+        "favoriteHotelIds": {
+          "type": "array",
+          "description": "Up to 20 favorite hotel IDs"
+        },
+        "favoriteFlightIds": {
+          "type": "array",
+          "description": "Up to 20 favorite flight IDs"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "displayName", "email", "travelStyle", "preferredCurrency", "homeAirport", "savedDestinationIds", "favoriteHotelIds", "favoriteFlightIds", "createdAt", "updatedAt"]
+    },
+    "Trip": {
+      "title": "Trip",
+      "description": "A user-created trip and smart itinerary record.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "destination": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "departureCity": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "startDate": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "days": {
+          "type": "number"
+        },
+        "travelers": {
+          "type": "number"
+        },
+        "budget": {
+          "type": "number"
+        },
+        "travelType": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "status": {
+          "type": "string",
+          "enum": ["planned", "active", "completed", "archived"],
+          "maxLength": 30
+        },
+        "summary": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["ownerId", "destination", "departureCity", "startDate", "days", "travelers", "budget", "travelType", "status", "summary", "createdAt", "updatedAt"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "Simulated or confirmed flight/hotel/package reservation record.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "bookingType": {
+          "type": "string",
+          "enum": ["flight", "hotel", "package"],
+          "maxLength": 20
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "provider": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "travelDate": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "travelers": {
+          "type": "number"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["confirmed", "modification_requested", "cancelled"],
+          "maxLength": 30
+        },
+        "referenceCode": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["ownerId", "bookingType", "title", "provider", "travelDate", "travelers", "amount", "status", "referenceCode", "notes", "createdAt", "updatedAt"]
+    },
+    "SupportTicket": {
+      "title": "SupportTicket",
+      "description": "Customer post-booking travel support ticket or disruption assistance log.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "bookingRef": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "category": {
+          "type": "string",
+          "enum": ["flight_delay", "cancellation", "rebooking", "general"],
+          "maxLength": 30
+        },
+        "subject": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1500
+        },
+        "status": {
+          "type": "string",
+          "enum": ["open", "in_progress", "resolved"],
+          "maxLength": 30
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["ownerId", "bookingRef", "category", "subject", "message", "status", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private user profile and travel preferences isolated by userId."
+    },
+    "/trips/{tripId}": {
+      "schema": { "$ref": "#/entities/Trip" },
+      "description": "Saved user trips and smart itineraries."
+    },
+    "/bookings/{bookingId}": {
+      "schema": { "$ref": "#/entities/Booking" },
+      "description": "User travel bookings and reservations."
+    },
+    "/supportTickets/{ticketId}": {
+      "schema": { "$ref": "#/entities/SupportTicket" },
+      "description": "Post-booking customer support conversations and tickets."
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "TravelMate AI",
+  "description": "Compare. Book. Explore. Intelligent AI-powered travel planning, flight and hotel comparison, smart itinerary generation, budget calculation, and booking management platform.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

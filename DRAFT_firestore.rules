@@ -1,0 +1,212 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} { allow read, write: if false; }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isVerifiedUser() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        request.auth.token.email == 'hariomsingh6288@gmail.com'
+      );
+    }
+
+    function isBoundedStringArray(arr, maxItems) {
+      return arr is list && arr.size() <= maxItems && (arr.size() == 0 || (arr[0] is string && arr[0].size() <= 128));
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll([
+        'uid', 'displayName', 'email', 'travelStyle', 'preferredCurrency',
+        'homeAirport', 'savedDestinationIds', 'favoriteHotelIds', 'favoriteFlightIds',
+        'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'uid', 'displayName', 'email', 'travelStyle', 'preferredCurrency',
+        'homeAirport', 'savedDestinationIds', 'favoriteHotelIds', 'favoriteFlightIds',
+        'createdAt', 'updatedAt'
+      ]) &&
+      data.uid == request.auth.uid &&
+      isValidId(data.uid) &&
+      data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100 &&
+      data.email is string && data.email.size() >= 3 && data.email.size() <= 200 &&
+      data.travelStyle is string && data.travelStyle.size() <= 40 &&
+      data.travelStyle in ['Adventure', 'Family', 'Solo', 'Nature', 'Historical', 'Religious', 'Romantic', 'Budget'] &&
+      data.preferredCurrency is string && data.preferredCurrency.size() >= 1 && data.preferredCurrency.size() <= 10 &&
+      data.homeAirport is string && data.homeAirport.size() >= 1 && data.homeAirport.size() <= 80 &&
+      isBoundedStringArray(data.savedDestinationIds, 20) &&
+      isBoundedStringArray(data.favoriteHotelIds, 20) &&
+      isBoundedStringArray(data.favoriteFlightIds, 20) &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidTrip(data) {
+      return data.keys().hasAll([
+        'ownerId', 'destination', 'departureCity', 'startDate', 'days',
+        'travelers', 'budget', 'travelType', 'status', 'summary', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'ownerId', 'destination', 'departureCity', 'startDate', 'days',
+        'travelers', 'budget', 'travelType', 'status', 'summary', 'createdAt', 'updatedAt'
+      ]) &&
+      data.ownerId == request.auth.uid &&
+      isValidId(data.ownerId) &&
+      data.destination is string && data.destination.size() >= 1 && data.destination.size() <= 120 &&
+      data.departureCity is string && data.departureCity.size() >= 1 && data.departureCity.size() <= 120 &&
+      data.startDate is string && data.startDate.size() >= 1 && data.startDate.size() <= 30 &&
+      data.days is number && data.days >= 1 && data.days <= 60 &&
+      data.travelers is number && data.travelers >= 1 && data.travelers <= 30 &&
+      data.budget is number && data.budget >= 0 && data.budget <= 100000000 &&
+      data.travelType is string && data.travelType.size() >= 1 && data.travelType.size() <= 50 &&
+      data.status is string && data.status.size() <= 30 &&
+      data.status in ['planned', 'active', 'completed', 'archived'] &&
+      data.summary is string && data.summary.size() <= 1000 &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidBooking(data) {
+      return data.keys().hasAll([
+        'ownerId', 'bookingType', 'title', 'provider', 'travelDate',
+        'travelers', 'amount', 'status', 'referenceCode', 'notes', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'ownerId', 'bookingType', 'title', 'provider', 'travelDate',
+        'travelers', 'amount', 'status', 'referenceCode', 'notes', 'createdAt', 'updatedAt'
+      ]) &&
+      data.ownerId == request.auth.uid &&
+      isValidId(data.ownerId) &&
+      data.bookingType is string && data.bookingType.size() <= 20 &&
+      data.bookingType in ['flight', 'hotel', 'package'] &&
+      data.title is string && data.title.size() >= 1 && data.title.size() <= 160 &&
+      data.provider is string && data.provider.size() >= 1 && data.provider.size() <= 120 &&
+      data.travelDate is string && data.travelDate.size() >= 1 && data.travelDate.size() <= 40 &&
+      data.travelers is number && data.travelers >= 1 && data.travelers <= 30 &&
+      data.amount is number && data.amount >= 0 && data.amount <= 100000000 &&
+      data.status is string && data.status.size() <= 30 &&
+      data.status in ['confirmed', 'modification_requested', 'cancelled'] &&
+      data.referenceCode is string && data.referenceCode.size() >= 1 && data.referenceCode.size() <= 40 &&
+      data.notes is string && data.notes.size() <= 500 &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidSupportTicket(data) {
+      return data.keys().hasAll([
+        'ownerId', 'bookingRef', 'category', 'subject', 'message', 'status', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'ownerId', 'bookingRef', 'category', 'subject', 'message', 'status', 'createdAt', 'updatedAt'
+      ]) &&
+      data.ownerId == request.auth.uid &&
+      isValidId(data.ownerId) &&
+      data.bookingRef is string && data.bookingRef.size() <= 40 &&
+      data.category is string && data.category.size() <= 30 &&
+      data.category in ['flight_delay', 'cancellation', 'rebooking', 'general'] &&
+      data.subject is string && data.subject.size() >= 1 && data.subject.size() <= 160 &&
+      data.message is string && data.message.size() >= 1 && data.message.size() <= 1500 &&
+      data.status is string && data.status.size() <= 30 &&
+      data.status in ['open', 'in_progress', 'resolved'] &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && isValidId(adminId) && (request.auth.uid == adminId || isAdmin());
+      allow list, create, update, delete: if false;
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isVerifiedUser() && isValidId(userId) && request.auth.uid == userId &&
+        isValidUserProfile(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(userId) && isValidUserProfile(incoming()) &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (request.auth.uid == userId && incoming().diff(existing()).affectedKeys().hasOnly([
+            'displayName', 'travelStyle', 'preferredCurrency', 'homeAirport',
+            'savedDestinationIds', 'favoriteHotelIds', 'favoriteFlightIds', 'updatedAt'
+          ]))
+        );
+      allow delete: if isAdmin() && isValidId(userId);
+    }
+
+    match /trips/{tripId} {
+      allow get: if isSignedIn() && isValidId(tripId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().ownerId == request.auth.uid || isAdmin());
+      allow create: if isVerifiedUser() && isValidId(tripId) && isValidTrip(incoming()) &&
+        incoming().createdAt == request.time && incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid));
+      allow update: if isVerifiedUser() && isValidId(tripId) && isValidTrip(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (existing().ownerId == request.auth.uid && existing().status != 'archived' &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'destination', 'departureCity', 'startDate', 'days', 'travelers',
+              'budget', 'travelType', 'status', 'summary', 'updatedAt'
+            ]))
+        );
+      allow delete: if isVerifiedUser() && isValidId(tripId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    match /bookings/{bookingId} {
+      allow get: if isSignedIn() && isValidId(bookingId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().ownerId == request.auth.uid || isAdmin());
+      allow create: if isVerifiedUser() && isValidId(bookingId) && isValidBooking(incoming()) &&
+        incoming().createdAt == request.time && incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid));
+      allow update: if isVerifiedUser() && isValidId(bookingId) && isValidBooking(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (existing().ownerId == request.auth.uid && existing().status != 'cancelled' &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['status', 'travelDate', 'notes', 'updatedAt']))
+        );
+      allow delete: if isAdmin() && isValidId(bookingId);
+    }
+
+    match /supportTickets/{ticketId} {
+      allow get: if isSignedIn() && isValidId(ticketId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().ownerId == request.auth.uid || isAdmin());
+      allow create: if isVerifiedUser() && isValidId(ticketId) && isValidSupportTicket(incoming()) &&
+        incoming().createdAt == request.time && incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid));
+      allow update: if isVerifiedUser() && isValidId(ticketId) && isValidSupportTicket(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (existing().ownerId == request.auth.uid && existing().status != 'resolved' &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['message', 'status', 'updatedAt']))
+        );
+      allow delete: if isAdmin() && isValidId(ticketId);
+    }
+  }
+}
